@@ -1,0 +1,6 @@
+======
+PyPerf
+======
+
+This is a simple performance measuring tool for python which uses decorators to
+mark the functions you'd want to get performance data from.

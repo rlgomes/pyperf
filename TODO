@@ -1,0 +1,5 @@
+
+
+- separate by arguments ? by caller ? this would allow you to easily know which 
+  calls were done by which caller and which arguments are resulting in the worst
+  performance
