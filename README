@@ -6,8 +6,8 @@ decorators to mark the functions you'd want to get performance data. After
 marking your functions witht the @pyperf.measure decorator you can then turn the 
 library on and off by simply setting the global variable pyperf.PYPERF to True. 
 
-Quick Start
------------
+Using PyPerf
+------------
 
 Using the pyperf library is very easy and straightforward to use and here is a
 quick example:
@@ -31,10 +31,6 @@ function | tot calls | tot dur(ms) | avg dur(ms) | max dur(ms) | min dur(ms)
  func3   |     30    |      5      |      0      |      0      |      0     
  func2   |     27    |      4      |      0      |      0      |      0     
  func1   |     18    |      2      |      0      |      0      |      0     
- func4   |     25    |      7      |      0      |      0      |      0     
-
-Documentation
--------------
 
 There are a few other options you can enable when using the pyperf module that
 actually can give you more advanced information about the methods that you want
