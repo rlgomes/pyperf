@@ -1,6 +1,64 @@
-======
-PyPerf
-======
+Introduction
+------------
 
-This is a simple performance measuring tool for python which uses decorators to
-mark the functions you'd want to get performance data from.
+pyperf is a simple performance measuring library for python which uses python 
+decorators to mark the functions you'd want to get performance data. After
+marking your functions witht the @pyperf.measure decorator you can then turn the 
+library on and off by simply setting the global variable pyperf.PYPERF to True. 
+
+Quick Start
+-----------
+
+Using the pyperf library is very easy and straightforward to use and here is a
+quick example:
+
+import pyperf
+
+@pyperf.measure
+def do_something_function():
+    return "some data"
+
+Now by default pyperf is turned off and will have minimal application overhead
+when turned off. To turn it on you can just set the pyperf.PYPERF to True and 
+when you exit your application automatically print out the stats of the 
+various methods you decorated earlier, like so:
+
+PyPerf Report:
+==============
+
+function | tot calls | tot dur(ms) | avg dur(ms) | max dur(ms) | min dur(ms)
+----------------------------------------------------------------------------
+ func3   |     30    |      5      |      0      |      0      |      0     
+ func2   |     27    |      4      |      0      |      0      |      0     
+ func1   |     18    |      2      |      0      |      0      |      0     
+ func4   |     25    |      7      |      0      |      0      |      0     
+
+Documentation
+-------------
+
+There are a few other options you can enable when using the pyperf module that
+actually can give you more advanced information about the methods that you want
+to track performance on. The available options are:
+
+pyperf.PYPERF_TRACKARGUMENTS - when set to True pyperf will track the stats per
+                               call to each of the functions but making sure to
+                               separate the stats by the actual arguments used
+                               during calling. The stats output will contain
+                               function names with the arguments used during
+                               each of the calls.
+
+pyperf.PYPERF_TRACKCALLER - when set to True pyperf will track the stats by 
+                            separting the calls to any decorated function by the
+                            caller to that function. The output will contain 
+                            function names that look like so: 
+                            caller_function->called_function
+                            
+Installing
+----------
+
+python setup.py install
+
+License
+-------
+
+Apache 2.0 License (http://www.apache.org/licenses/LICENSE-2.0.html)

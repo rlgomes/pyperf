@@ -1,14 +1,41 @@
 import time
 import sys
 import atexit
+import signal
 
 import tableprinter
 
 global functions
 functions = {}
+
+global PYPERF_TRACKARGUMENTS
+PYPERF_TRACKARGUMENTS = False
+
+global PYPERF_TRACKCALLER
+PYPERF_TRACKCALLER = False
     
 global PYPERF
-PYPERF = True
+PYPERF = False
+
+def handle_signal(sig, frame):
+    global PYPERF
+    
+    if ( sig == signal.SIGUSR1 ):
+        if ( PYPERF ):
+            PYPERF = False
+            print("Disabling PyPerf module")
+        else:
+            PYPERF = True
+            print("Enabling PyPerf module")
+    elif ( sig == signal.SIGUSR2 ):
+        printreport()
+
+# SIGUSR1 enables/disables the pyperf tracking
+signal.signal(signal.SIGUSR1, handle_signal)
+
+# SIGUSR2 prints the current pyperf report
+signal.signal(signal.SIGUSR2, handle_signal)
+
 
 def reset():
     '''
@@ -22,37 +49,21 @@ def getreport():
     '''
     Returns a the current statistics gathered by the PyPerf library at runtime.
     You can reset the stats by using the reset method.
-    '''
-    data = {}
     
-    for f in functions:
-        m = functions[f]
-        totaldur = m.totaldur()
-            
-        if  m.count() != 0 :
-            count = m.count()
-            avg = totaldur/count
-        else:
-            count = 0
-            avg = 0
-            
-        maxdur = m.maxdur()
-        mindur = m.mindur()
-        
-        data[f.__name__] = {"calls" : str(int(count)),
-                            "totaldur" : str(int(totaldur)),
-                            "avgdur" : str(int(avg)),
-                            "maxdur" : str(int(maxdur)),
-                            "mindur" : str(int(mindur))}
-        
-    return data
+    The return object looks like so: 
+	    {
+	     "function1" : Stats(),
+	     "function2" : Stats(),
+	    }
+    '''
+    return functions
 
-def __printreport():
+def printreport():
     if len(functions.keys()) == 0: 
         return
     
     print("\nPyPerf Report:")
-    print("==============\n")
+    print("=============\n")
  
     labels = ["function",
               "tot calls",
@@ -65,31 +76,42 @@ def __printreport():
     try:
         for f in functions:
             m = functions[f]
-            totaldur = m.totaldur()
             
-            if  m.count() != 0 :
-                count = m.count()
-                avg = totaldur/count
-            else:
-                count = 0
-                avg = 0
-                
-            maxdur = m.maxdur()
-            mindur = m.mindur()
-            
-            if count != 0:
-                data.append([f.__name__,
-                             str(int(count)),
-                             str(int(totaldur)),
-                             str(int(avg)),
-                             str(int(maxdur)),
-                             str(int(mindur))])
+            if m.total_calls != 0:
+                data.append([f,
+                             str(int(m.total_calls)),
+                             str(int(m.total_duration)),
+                             str(int(m.average_duration)),
+                             str(int(m.max_duration)),
+                             str(int(m.min_duration))
+                            ])
     except Exception as e: 
         print("errnoror at exit %s" % e)
 
     print tableprinter.indent([labels] + data, hasHeader=True, justify='center')
 
-atexit.register(__printreport)
+atexit.register(printreport)
+
+class Stats(object):
+    
+    def __init__(self):
+        self.total_calls = 0
+        self.total_duration = 0
+        self.average_duration = 0
+        self.max_duration = 0
+        self.min_duration = sys.maxint
+        
+    def update(self,duration):
+        self.total_duration+=duration
+        self.total_calls+=1
+        
+        if duration > self.max_duration:
+            self.max_duration = duration
+            
+        if duration < self.min_duration:
+            self.min_duration = duration
+            
+        self.average_duration = self.total_duration / self.total_calls
 
 class measure(object):
     '''
@@ -103,45 +125,54 @@ class measure(object):
     counters back to 0.
     '''
 
+    global PYPERF_TRACKARGUMENTS
+    global PYPERF_TRACKCALLER
     global PYPERF
     global functions
     
     def __init__(self, function, trackarguments = False):
         self.__f = function
-        self.__count = 0
-        self.__totaldur = 0
-        self.__mindur = sys.maxint
-        self.__maxdur = 0
-        functions[function] = self
+        self.__trackarguments = trackarguments
    
     def __call__(self, *args, **kwargs): 
         if ( PYPERF ):
+            stats = None
+            
+            if ( PYPERF_TRACKCALLER ):
+                import inspect
+                key = inspect.stack()[1][3] + "->" + self.__f.__name__
+            elif ( PYPERF_TRACKARGUMENTS ):
+                key = self.__f.__name__ + "("
+                
+                for a in args:
+                    aux = None
+                    
+                    if type(a) == str:
+                        aux = "'" + a + "'"
+                    else:
+                        aux = str(a)
+                        
+                    key += aux + ","
+
+                for k in kwargs:
+                    key += k + ","
+                
+                key = key[:-1] + ")"
+            else:
+                key = self.__f.__name__ 
+                
+            if not(key in functions.keys()):
+                stats = Stats()
+                functions[key] = stats
+            else:
+                stats = functions[key]
+           
             t = time.time()*1000
             ret = self.__f(*args, **kwargs)
-            dur = (time.time() * 1000) - t
-            
-            self.__totaldur+=dur
-            self.__count+=1
-            
-            if dur > self.__maxdur:
-                self.__maxdur = dur
-
-            if dur < self.__mindur:
-                self.__mindur = dur
+            duration = (time.time() * 1000) - t
+            stats.update(duration)
             
             return ret
         else:
             return self.__f(*args, **kwargs)
-
-    def count(self):
-        return self.__count
-
-    def totaldur(self):
-        return self.__totaldur
-
-    def maxdur(self):
-        return self.__maxdur
-
-    def mindur(self):
-        return self.__mindur
     
