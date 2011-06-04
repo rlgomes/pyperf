@@ -18,7 +18,7 @@ def func1():
 class SignalTests(unittest.TestCase):
      
     def setUp(self): 
-        pyperf.PYPERF = True
+        pyperf.PYPERF = False
         
     def test_signal_enabling_disabling(self):
         pid = os.getpid()
