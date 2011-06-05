@@ -8,15 +8,15 @@ import tableprinter
 global functions
 functions = {}
 
+global PYPERF
+PYPERF = False
+
 global PYPERF_TRACKARGUMENTS
 PYPERF_TRACKARGUMENTS = False
 
 global PYPERF_TRACKCALLER
 PYPERF_TRACKCALLER = False
     
-global PYPERF
-PYPERF = False
-
 def handle_signal(sig, frame):
     global PYPERF
     
