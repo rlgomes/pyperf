@@ -5,7 +5,7 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">/usr/bin/python2.7</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.7</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
-<path>/PyPerf/tests</path>
-<path>/PyPerf/src</path>
+<path>/pyperf/tests</path>
+<path>/pyperf/src</path>
 </pydev_pathproperty>
 </pydev_project>
