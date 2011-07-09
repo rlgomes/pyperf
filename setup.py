@@ -7,7 +7,7 @@ setup (
     author_email='rodneygomes@attention: gmail.com',
     url='',
     keywords = ['performance'],
-    py_modules = ['src/pyperf','src/tableprinter'],
+    py_modules = ['pyperf','tableprinter'],
     license='Apache 2.0 License',
     description='',
     long_description=open('README').read(),
