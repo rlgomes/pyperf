@@ -175,4 +175,11 @@ class measure(object):
             return ret
         else:
             return self.__f(*args, **kwargs)
-    
+        
+    def __get__(self, obj, type=None):
+        if obj is None:
+            return self
+        
+        new_func = self.__f.__get__(obj, type)
+        return self.__class__(new_func) 
+ 

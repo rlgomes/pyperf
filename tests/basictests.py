@@ -87,6 +87,27 @@ class BasicTests(unittest.TestCase):
         self.assertTrue(report["sfunc(1)"].total_calls > 0,
                         msg="Did not find sfunc(1) calls.")
         pyperf.reset()
+
+    @pyperf.measure
+    def somefunc(self,a):
+        # this use to fail because of the self and the decorator not using the
+        # __get__ class method to correct for when decorating class methods
+        return a
+
+    def test_function_in_class(self):
+        ITERATIONS = 100
+        pyperf.PYPERF_TRACKCALLER = True
+        try:
+            for _ in range(0,ITERATIONS):
+                self.somefunc(1)
+        finally:
+            pyperf.PYPERF_TRACKCALLER = False
+           
+        report = pyperf.getreport()
+        pyperf.printreport()
+        self.assertTrue(report["test_function_in_class->somefunc"].total_calls == 100,
+                        msg="Did not find 'somefunc' calls.")
+        pyperf.reset()
         
     def test_same_function_with_different_callers(self):
         ITERATIONS = 100
