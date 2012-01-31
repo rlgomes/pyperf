@@ -142,11 +142,6 @@ class measure(object):
     counters back to 0.
     '''
 
-    global PYPERF_TRACKARGUMENTS
-    global PYPERF_TRACKCALLER
-    global PYPERF
-    global FUNCTIONS
-    
     def __init__(self, function, trackarguments = False):
         self.__f = function
         self.__trackarguments = trackarguments
