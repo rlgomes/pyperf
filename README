@@ -54,6 +54,10 @@ Installing
 
 python setup.py install
 
+or install directly from github with:
+
+pip install -e git+git://github.com/rlgomes/pyperf.git#egg=pyperf
+
 Running Built-In Tests
 -----------------------
 
