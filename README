@@ -59,6 +59,7 @@ Running Built-In Tests
 
 Go to the tests directory and you can run all the tests by executing:
 
+cd tests
 python alltests.py
 
 License

@@ -1,3 +1,10 @@
+"""
+pyperf is a simple performance measuring library for python which uses python 
+decorators to mark the FUNCTIONS you'd want to get performance data. After
+marking your FUNCTIONS witht the @pyperf.measure decorator you can then turn 
+the library on and off by simply setting the global variable pyperf.PYPERF to 
+True. 
+"""
 import time
 import sys
 import atexit
@@ -5,8 +12,8 @@ import signal
 
 import tableprinter
 
-global functions
-functions = {}
+global FUNCTIONS
+FUNCTIONS = {}
 
 global PYPERF
 PYPERF = False
@@ -17,7 +24,10 @@ PYPERF_TRACKARGUMENTS = False
 global PYPERF_TRACKCALLER
 PYPERF_TRACKCALLER = False
     
-def handle_signal(sig, frame):
+def __handle_signal(sig, frame):
+    """
+    simple signal handler to disable/enable pyperf at runtime
+    """
     global PYPERF
     
     if ( sig == signal.SIGUSR1 ):
@@ -31,10 +41,10 @@ def handle_signal(sig, frame):
         printreport()
 
 # SIGUSR1 enables/disables the pyperf tracking
-signal.signal(signal.SIGUSR1, handle_signal)
+signal.signal(signal.SIGUSR1, __handle_signal)
 
 # SIGUSR2 prints the current pyperf report
-signal.signal(signal.SIGUSR2, handle_signal)
+signal.signal(signal.SIGUSR2, __handle_signal)
 
 
 def reset():
@@ -42,8 +52,8 @@ def reset():
     Resets the PyPerf performance measurements and zeros out everything at this
     given point in time.
     '''
-    global functions
-    functions = {}
+    global FUNCTIONS
+    FUNCTIONS = {}
 
 def getreport():
     '''
@@ -56,10 +66,13 @@ def getreport():
 	     "function2" : Stats(),
 	    }
     '''
-    return functions
+    return FUNCTIONS
 
 def printreport():
-    if len(functions.keys()) == 0: 
+    """
+    print to stdou the pyperf report as of right now.
+    """
+    if len(FUNCTIONS.keys()) == 0: 
         return
     
     print("\nPyPerf Report:")
@@ -73,26 +86,26 @@ def printreport():
               "min dur(ms)"] 
     data = []
      
-    try:
-        for f in functions:
-            m = functions[f]
+    for func in FUNCTIONS:
+        stats = FUNCTIONS[func]
             
-            if m.total_calls != 0:
-                data.append([f,
-                             str(int(m.total_calls)),
-                             str(int(m.total_duration)),
-                             str(int(m.average_duration)),
-                             str(int(m.max_duration)),
-                             str(int(m.min_duration))
-                            ])
-    except Exception as e: 
-        print("errnoror at exit %s" % e)
+        if stats.total_calls != 0:
+            data.append([func,
+                         str(int(stats.total_calls)),
+                         str(int(stats.total_duration)),
+                         str(int(stats.average_duration)),
+                         str(int(stats.max_duration)),
+                         str(int(stats.min_duration))
+                        ])
 
     print tableprinter.indent([labels] + data, hasHeader=True, justify='center')
 
 atexit.register(printreport)
 
 class Stats(object):
+    """
+    statistics container object.
+    """
     
     def __init__(self):
         self.total_calls = 0
@@ -101,9 +114,13 @@ class Stats(object):
         self.max_duration = 0
         self.min_duration = sys.maxint
         
-    def update(self,duration):
-        self.total_duration+=duration
-        self.total_calls+=1
+    def update(self, duration):
+        """
+        update statistics information based on the duration passed as an 
+        argument
+        """
+        self.total_duration += duration
+        self.total_calls += 1
         
         if duration > self.max_duration:
             self.max_duration = duration
@@ -118,7 +135,7 @@ class measure(object):
     This decorator is used to label the methods that you'd like to have PyPerf
     module tracking the performance stats on. With this decorator in place at 
     the end of the test run PyPerf will print the statistics for all of the 
-    functions that had the @meausre decorator on them.
+    FUNCTIONS that had the @meausre decorator on them.
     
     At runtime you can also call the getreport method to get the exact stats 
     at the current time, and you can use the reset to simply reset all the 
@@ -128,7 +145,7 @@ class measure(object):
     global PYPERF_TRACKARGUMENTS
     global PYPERF_TRACKCALLER
     global PYPERF
-    global functions
+    global FUNCTIONS
     
     def __init__(self, function, trackarguments = False):
         self.__f = function
@@ -144,32 +161,32 @@ class measure(object):
             elif ( PYPERF_TRACKARGUMENTS ):
                 key = self.__f.__name__ + "("
                 
-                for a in args:
+                for arg in args:
                     aux = None
                     
-                    if type(a) == str:
-                        aux = "'" + a + "'"
+                    if type(arg) == str:
+                        aux = "'" + arg + "'"
                     else:
-                        aux = str(a)
+                        aux = str(arg)
                         
                     key += aux + ","
 
-                for k in kwargs:
-                    key += k + ","
+                for kwarg in kwargs:
+                    key += kwarg + ","
                 
                 key = key[:-1] + ")"
             else:
                 key = self.__f.__name__ 
                 
-            if not(key in functions.keys()):
+            if not(key in FUNCTIONS.keys()):
                 stats = Stats()
-                functions[key] = stats
+                FUNCTIONS[key] = stats
             else:
-                stats = functions[key]
+                stats = FUNCTIONS[key]
            
-            t = time.time()*1000
+            start = time.time()*1000
             ret = self.__f(*args, **kwargs)
-            duration = (time.time() * 1000) - t
+            duration = (time.time() * 1000) - start
             stats.update(duration)
             
             return ret
